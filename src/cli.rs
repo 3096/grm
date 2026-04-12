@@ -26,6 +26,8 @@ pub enum Commands {
         /// The GitHub repository to upgrade (optional)
         repo: Option<String>,
     },
+    /// List all managed repositories
+    List {},
     /// Manage grm configuration
     Config {
         /// The config key to get or set (e.g., "default_download_path")

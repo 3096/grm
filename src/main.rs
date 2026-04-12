@@ -1,7 +1,8 @@
+mod archive;
 mod cli;
 mod config;
-mod repo;
 mod platforms;
+mod repo;
 
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -14,7 +15,11 @@ async fn main() {
     let mut config = Config::load();
 
     match cli.command {
-        Commands::Add { repo, path, release_type } => {
+        Commands::Add {
+            repo,
+            path,
+            release_type,
+        } => {
             if let Err(e) = RepoManager::add(&mut config, &repo, path, release_type).await {
                 eprintln!("Error: {}", e);
             } else {
@@ -27,6 +32,17 @@ async fn main() {
                 eprintln!("Error: {}", e);
             } else {
                 println!("Upgrade process completed.");
+            }
+        }
+        Commands::List {} => {
+            if config.repositories.is_empty() {
+                println!("No repositories managed by grm.");
+            } else {
+                println!("{:<20} {:<20} {:<10}", "Repository", "Path", "Version");
+                println!("{:-<50}", "");
+                for repo in &config.repositories {
+                    println!("{:<20} {:<20} {:<10}", repo.name, repo.path, repo.version);
+                }
             }
         }
         Commands::Config {

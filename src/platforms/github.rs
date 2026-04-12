@@ -1,8 +1,7 @@
 use crate::platforms::{ReleaseInfo, ReleasePlatform};
 use async_trait::async_trait;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use std::fs;
+use serde::Deserialize;
 use std::path::Path;
 
 #[derive(Deserialize)]
@@ -31,7 +30,11 @@ impl GithubPlatform {
 
 #[async_trait]
 impl ReleasePlatform for GithubPlatform {
-    async fn get_latest_release(&self, repo: &str, release_type: Option<&str>) -> Result<ReleaseInfo, String> {
+    async fn get_latest_release(
+        &self,
+        repo: &str,
+        release_type: Option<&str>,
+    ) -> Result<ReleaseInfo, String> {
         let url = format!("https://api.github.com/repos/{}/releases/latest", repo);
 
         let response = self
@@ -49,10 +52,17 @@ impl ReleasePlatform for GithubPlatform {
                 .map_err(|e| format!("Failed to parse release JSON: {}", e))?;
 
             if let Some(rt) = release_type {
-                let asset = release.assets.iter()
+                let asset = release
+                    .assets
+                    .iter()
                     .find(|a| a.name.contains(rt))
-                    .ok_or_else(|| format!("No asset matching keyword '{}' found in the latest release", rt))?;
-                
+                    .ok_or_else(|| {
+                        format!(
+                            "No asset matching keyword '{}' found in the latest release",
+                            rt
+                        )
+                    })?;
+
                 return Ok(ReleaseInfo {
                     version: release.tag_name,
                     download_url: asset.browser_download_url.clone(),
