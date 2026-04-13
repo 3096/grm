@@ -11,7 +11,8 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RepoConfig {
-    pub name: String,
+    pub author: String,
+    pub repo: String,
     pub path: String,
     pub version: String,
 }
@@ -173,7 +174,8 @@ mod tests {
 
         let config = Config {
             repositories: vec![RepoConfig {
-                name: "owner/repo".to_string(),
+                author: "owner".to_string(),
+                repo: "repo".to_string(),
                 path: "/tmp/repo".to_string(),
                 version: "v1.0.0".to_string(),
             }],
@@ -187,7 +189,7 @@ mod tests {
 
         assert_eq!(config.repositories.len(), 1);
         assert_eq!(loaded_config.repositories.len(), 1);
-        assert_eq!(loaded_config.repositories[0].name, "owner/repo");
+        assert_eq!(loaded_config.repositories[0].repo, "repo");
     }
 
     #[test]

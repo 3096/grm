@@ -66,6 +66,7 @@ impl ReleasePlatform for GithubPlatform {
                 return Ok(ReleaseInfo {
                     version: release.tag_name,
                     download_url: asset.browser_download_url.clone(),
+                    filename: asset.name.clone(),
                 });
             } else {
                 if release.assets.len() == 1 {
@@ -73,6 +74,7 @@ impl ReleasePlatform for GithubPlatform {
                     return Ok(ReleaseInfo {
                         version: release.tag_name,
                         download_url: asset.browser_download_url.clone(),
+                        filename: asset.name.clone(),
                     });
                 } else if release.assets.is_empty() {
                     return Err("No assets found in the latest release".to_string());

@@ -11,6 +11,18 @@ impl RepoManager {
         path: Option<String>,
         release_type: Option<String>,
     ) -> Result<(), String> {
+        let repo_name = repo
+            .split('/')
+            .nth(1)
+            .ok_or_else(|| "Invalid repository format. Expected 'owner/repo'".to_string())?;
+
+        if config.repositories.iter().any(|rc| rc.repo == repo_name) {
+            return Err(format!(
+                "Repository {} is already managed by grm",
+                repo_name
+            ));
+        }
+
         println!("Adding repository: {}", repo);
 
         let download_path_str = match path {
@@ -35,7 +47,7 @@ impl RepoManager {
         // Use a temporary directory for the download and extraction process
         let temp_dir =
             tempfile::tempdir().map_err(|e| format!("Failed to create temp dir: {}", e))?;
-        let archive_path = temp_dir.path().join("release_archive");
+        let archive_path = temp_dir.path().join(&release_info.filename);
 
         if let Err(e) = platform
             .download_release(&release_info.download_url, &archive_path)
@@ -53,11 +65,16 @@ impl RepoManager {
 
         // Finalize the extraction to the destination
         let final_destination = std::path::PathBuf::from(&download_path_str);
-        crate::archive::ArchiveManager::finalize_extraction(&extract_dir, &final_destination, repo)
-            .map_err(|e| e)?;
+        crate::archive::ArchiveManager::finalize_extraction(
+            &extract_dir,
+            &final_destination,
+            repo_name,
+        )
+        .map_err(|e| e)?;
 
         config.repositories.push(crate::config::RepoConfig {
-            name: repo.to_string(),
+            author: repo.split('/').next().unwrap_or("unknown").to_string(),
+            repo: repo_name.to_string(),
             path: download_path_str,
             version: release_info.version,
         });
@@ -74,7 +91,7 @@ impl RepoManager {
                 let repo_config = config
                     .repositories
                     .iter_mut()
-                    .find(|rc| rc.name == r)
+                    .find(|rc| rc.repo == r)
                     .ok_or_else(|| format!("Repository {} not found in config", r))?;
 
                 Self::upgrade_repo(&platform, repo_config).await?;
@@ -94,16 +111,12 @@ impl RepoManager {
         platform: &dyn ReleasePlatform,
         repo_config: &mut crate::config::RepoConfig,
     ) -> Result<(), String> {
-        println!("Checking for updates for {}...", repo_config.name);
+        let repo_full_name = format!("{}/{}", repo_config.author, repo_config.repo);
+        println!("Checking for updates for {}...", repo_full_name);
         let release_info = platform
-            .get_latest_release(&repo_config.name, None)
+            .get_latest_release(&repo_full_name, None)
             .await
-            .map_err(|e| {
-                format!(
-                    "Failed to get latest release for {}: {}",
-                    repo_config.name, e
-                )
-            })?;
+            .map_err(|e| format!("Failed to get latest release for {}: {}", repo_full_name, e))?;
 
         if release_info.version != repo_config.version {
             println!(
@@ -113,7 +126,7 @@ impl RepoManager {
 
             let temp_dir =
                 tempfile::tempdir().map_err(|e| format!("Failed to create temp dir: {}", e))?;
-            let archive_path = temp_dir.path().join("release_archive");
+            let archive_path = temp_dir.path().join(&release_info.filename);
 
             if let Err(e) = platform
                 .download_release(&release_info.download_url, &archive_path)
@@ -132,19 +145,19 @@ impl RepoManager {
             crate::archive::ArchiveManager::finalize_extraction(
                 &extract_dir,
                 &final_destination,
-                &repo_config.name,
+                &repo_config.repo,
             )
             .map_err(|e| e)?;
 
             repo_config.version = release_info.version;
             println!(
                 "Successfully upgraded {} to {}",
-                repo_config.name, repo_config.version
+                repo_full_name, repo_config.version
             );
         } else {
             println!(
                 "{} is already up to date (version {})",
-                repo_config.name, repo_config.version
+                repo_full_name, repo_config.version
             );
         }
         Ok(())

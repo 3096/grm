@@ -41,7 +41,12 @@ async fn main() {
                 println!("{:<20} {:<20} {:<10}", "Repository", "Path", "Version");
                 println!("{:-<50}", "");
                 for repo in &config.repositories {
-                    println!("{:<20} {:<20} {:<10}", repo.name, repo.path, repo.version);
+                    println!(
+                        "{:<20} {:<20} {:<10}",
+                        format!("{}/{}", repo.author, repo.repo),
+                        repo.path,
+                        repo.version
+                    );
                 }
             }
         }
