@@ -31,6 +31,7 @@ async fn main() {
             if let Err(e) = RepoManager::upgrade(&mut config, repo).await {
                 eprintln!("Error: {}", e);
             } else {
+                config.save().expect("Failed to save config");
                 println!("Upgrade process completed.");
             }
         }
@@ -54,9 +55,10 @@ async fn main() {
             key,
             value,
             list,
+            open,
             unset,
         } => {
-            config.handle_config_command(key, value, list, unset);
+            config.handle_config_command(key, value, list, open, unset);
         }
     }
 }

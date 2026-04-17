@@ -15,6 +15,7 @@ pub struct RepoConfig {
     pub repo: String,
     pub path: String,
     pub version: String,
+    pub release_type: Option<String>,
 }
 
 impl Config {
@@ -121,9 +122,15 @@ impl Config {
         key: Option<String>,
         value: Option<String>,
         list: bool,
+        open: bool,
         unset: bool,
     ) {
-        if list {
+        if open {
+            match self.open_config_file() {
+                Ok(_) => println!("Opened config file"),
+                Err(e) => println!("Error: {}", e),
+            }
+        } else if list {
             let values = self.list_values();
             for (k, v) in values {
                 println!("{} = {}", k, v);
@@ -160,6 +167,45 @@ impl Config {
             println!("Error: Config key required");
         }
     }
+
+    fn open_config_file(&self) -> Result<(), String> {
+        let config_path = Self::get_config_path();
+
+        if !config_path.exists() {
+            self.save_to_path(&config_path)
+                .map_err(|e| format!("Failed to initialize config file: {}", e))?;
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            std::process::Command::new("cmd")
+                .args(["/C", "start", "", &config_path.to_string_lossy()])
+                .spawn()
+                .map_err(|e| format!("Failed to open config file: {}", e))?;
+            return Ok(());
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            std::process::Command::new("open")
+                .arg(&config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config file: {}", e))?;
+            return Ok(());
+        }
+
+        #[cfg(all(unix, not(target_os = "macos")))]
+        {
+            std::process::Command::new("xdg-open")
+                .arg(&config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config file: {}", e))?;
+            return Ok(());
+        }
+
+        #[allow(unreachable_code)]
+        Err("Opening config file is not supported on this platform".to_string())
+    }
 }
 
 #[cfg(test)]
@@ -178,6 +224,7 @@ mod tests {
                 repo: "repo".to_string(),
                 path: "/tmp/repo".to_string(),
                 version: "v1.0.0".to_string(),
+                release_type: Some("windows".to_string()),
             }],
             default_download_path: None,
         };
@@ -190,6 +237,10 @@ mod tests {
         assert_eq!(config.repositories.len(), 1);
         assert_eq!(loaded_config.repositories.len(), 1);
         assert_eq!(loaded_config.repositories[0].repo, "repo");
+        assert_eq!(
+            loaded_config.repositories[0].release_type,
+            Some("windows".to_string())
+        );
     }
 
     #[test]
@@ -255,6 +306,7 @@ mod tests {
             Some("/tmp/downloads".to_string()),
             false,
             false,
+            false,
         );
         assert_eq!(
             config.get_value("default_download_path"),
@@ -262,7 +314,13 @@ mod tests {
         );
 
         // Test unset via handle
-        config.handle_config_command(Some("default_download_path".to_string()), None, false, true);
+        config.handle_config_command(
+            Some("default_download_path".to_string()),
+            None,
+            false,
+            false,
+            true,
+        );
         assert_eq!(config.get_value("default_download_path"), None);
     }
 }

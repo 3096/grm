@@ -37,6 +37,9 @@ pub enum Commands {
         /// List all configuration settings
         #[arg(short, long)]
         list: bool,
+        /// Open the config file in the default application
+        #[arg(short = 'o', long)]
+        open: bool,
         /// Unset a configuration setting
         #[arg(short, long)]
         unset: bool,

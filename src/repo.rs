@@ -77,6 +77,7 @@ impl RepoManager {
             repo: repo_name.to_string(),
             path: download_path_str,
             version: release_info.version,
+            release_type,
         });
 
         Ok(())
@@ -114,7 +115,7 @@ impl RepoManager {
         let repo_full_name = format!("{}/{}", repo_config.author, repo_config.repo);
         println!("Checking for updates for {}...", repo_full_name);
         let release_info = platform
-            .get_latest_release(&repo_full_name, None)
+            .get_latest_release(&repo_full_name, repo_config.release_type.as_deref())
             .await
             .map_err(|e| format!("Failed to get latest release for {}: {}", repo_full_name, e))?;
 
