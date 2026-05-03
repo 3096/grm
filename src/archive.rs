@@ -260,7 +260,7 @@ mod tests {
         ArchiveManager::finalize_extraction(&temp_extract_dir, &final_dest, "my_tool")
             .expect("Finalize failed");
 
-        assert!(final_dest.join("file1.txt").exists());
-        assert!(final_dest.join("file2.txt").exists());
+        assert!(final_dest.join("my_tool/file1.txt").exists());
+        assert!(final_dest.join("my_tool/file2.txt").exists());
     }
 }
