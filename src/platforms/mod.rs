@@ -6,7 +6,7 @@ pub trait ReleasePlatform {
     async fn get_latest_release(
         &self,
         repo: &str,
-        release_type: Option<&str>,
+        release_type: &[String],
     ) -> Result<ReleaseInfo, String>;
     async fn download_release(&self, url: &str, destination: &Path) -> Result<(), String>;
 }

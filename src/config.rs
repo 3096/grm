@@ -15,7 +15,8 @@ pub struct RepoConfig {
     pub repo: String,
     pub path: String,
     pub version: String,
-    pub release_type: Option<String>,
+    #[serde(default)]
+    pub release_type: Vec<String>,
 }
 
 impl Config {
@@ -224,7 +225,7 @@ mod tests {
                 repo: "repo".to_string(),
                 path: "/tmp/repo".to_string(),
                 version: "v1.0.0".to_string(),
-                release_type: Some("windows".to_string()),
+                release_type: vec!["windows".to_string()],
             }],
             default_download_path: None,
         };
@@ -239,7 +240,7 @@ mod tests {
         assert_eq!(loaded_config.repositories[0].repo, "repo");
         assert_eq!(
             loaded_config.repositories[0].release_type,
-            Some("windows".to_string())
+            vec!["windows".to_string()]
         );
     }
 

@@ -9,7 +9,7 @@ impl RepoManager {
         config: &mut Config,
         repo: &str,
         path: Option<String>,
-        release_type: Option<String>,
+        release_type: Vec<String>,
     ) -> Result<(), String> {
         let repo_name = repo
             .split('/')
@@ -35,7 +35,7 @@ impl RepoManager {
 
         let platform = crate::platforms::github::GithubPlatform::new();
         let release_info = platform
-            .get_latest_release(repo, release_type.as_deref())
+            .get_latest_release(repo, &release_type)
             .await
             .map_err(|e| format!("Failed to get latest release for {}: {}", repo, e))?;
 
@@ -115,7 +115,7 @@ impl RepoManager {
         let repo_full_name = format!("{}/{}", repo_config.author, repo_config.repo);
         println!("Checking for updates for {}...", repo_full_name);
         let release_info = platform
-            .get_latest_release(&repo_full_name, repo_config.release_type.as_deref())
+            .get_latest_release(&repo_full_name, &repo_config.release_type)
             .await
             .map_err(|e| format!("Failed to get latest release for {}: {}", repo_full_name, e))?;
 

@@ -33,7 +33,7 @@ impl ReleasePlatform for GithubPlatform {
     async fn get_latest_release(
         &self,
         repo: &str,
-        release_type: Option<&str>,
+        release_type: &[String],
     ) -> Result<ReleaseInfo, String> {
         let url = format!("https://api.github.com/repos/{}/releases/latest", repo);
 
@@ -51,15 +51,15 @@ impl ReleasePlatform for GithubPlatform {
                 .await
                 .map_err(|e| format!("Failed to parse release JSON: {}", e))?;
 
-            if let Some(rt) = release_type {
+            if !release_type.is_empty() {
                 let asset = release
                     .assets
                     .iter()
-                    .find(|a| a.name.contains(rt))
+                    .find(|a| release_type.iter().all(|rt| a.name.contains(rt)))
                     .ok_or_else(|| {
                         format!(
-                            "No asset matching keyword '{}' found in the latest release",
-                            rt
+                            "No asset matching all keywords {:?} found in the latest release",
+                            release_type
                         )
                     })?;
 

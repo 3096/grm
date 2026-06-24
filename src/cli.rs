@@ -17,9 +17,9 @@ pub enum Commands {
         /// The location to download the release to
         #[arg(short, long)]
         path: Option<String>,
-        /// Keyword to filter the release asset (e.g., "windows", "linux")
+        /// Keywords to filter the release asset (e.g., "windows", "linux"). All keywords must match.
         #[arg(short, long)]
-        release_type: Option<String>,
+        release_type: Vec<String>,
     },
     /// Upgrade a repository's release, or all if none specified
     Upgrade {
